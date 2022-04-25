@@ -1,23 +1,28 @@
+module Board where
+
 import Pieces
-import Data.Vector as Vector
+import Data.Vector as Vector hiding (catMaybes)
+import Data.Word
+import Data.Int
+import Data.Bits ( Bits((.&.), shiftL, shiftR, (.|.)) )
+import Data.Maybe as Maybe (catMaybes)
 
-newtype Square = Square (Maybe Piece)
-    deriving (Eq, Show)
-
-
+type Square = Maybe Piece
 
 newtype Board = Board (Vector.Vector Square)
 
 -- bit representation of coordinate, as in 0x88
-newtype Index = Word8
+type Index = Word8
 
 type Ray = [Index]
 
 data Rank = Rank1 | Rank2 | Rank3 | Rank4 | Rank5 | Rank6 | Rank7 | Rank8
+    deriving (Eq, Show, Bounded, Enum)
 
 data File = FileA | FileB | FileC | FileD | FileE | FileF | FileG | FileH
+    deriving (Eq, Show, Bounded, Enum)
 
-newtype Direction = Int8
+type Direction = Int8
 
 up :: Direction
 up = 0x10
@@ -40,7 +45,7 @@ indexToFile :: Index -> File
 indexToFile = toEnum . fromIntegral . (.&. 7)
 
 indexToRank :: Index -> Rank
-indexToRank = toEnum . fromIntegral . shiftR 4
+indexToRank = toEnum . fromIntegral . flip shiftR 4
 
 indexToFr :: Index -> (File, Rank)
 indexToFr bits = (indexToFile bits, indexToRank bits)
@@ -59,10 +64,10 @@ move index dir = let dest = index + fromIntegral dir in
 
 -- generate a ray of some length in a given direction
 extend :: Index -> Direction -> Int -> Ray
-extend index dir len = catMaybe $ extend' index dir len
+extend index dir len = catMaybes $ extend' (Just index) dir len
     where
-        extend :: Maybe Index -> Direction -> Int -> Ray
+        extend' :: Maybe Index -> Direction -> Int -> [Maybe Index]
         extend' _ _ 0 = []
         extend' Nothing _ _ = []
-        extend' index dir len = move index dir : extend' index dir len
+        extend' (Just index) dir len = move index dir : extend' (move index dir) dir (len-1)
 
