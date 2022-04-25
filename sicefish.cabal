@@ -11,13 +11,15 @@ library
   exposed-modules:     Pieces,
                        Game,
                        MoveGen,
-                       Board
+                       Board,
+                       FENParser
   hs-source-dirs:      src
   build-depends:       base >=4.14 && <4.15
                      , HUnit >= 1.6
                      , containers
                      , QuickCheck
                      , vector
+                     , megaparsec
   default-language:    Haskell2010
   ghc-options:         -Wno-type-defaults -fwarn-incomplete-patterns
                      
