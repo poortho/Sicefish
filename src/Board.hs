@@ -9,10 +9,10 @@ import Data.Maybe as Maybe (catMaybes)
 
 type Square = Maybe Piece
 
-newtype Board = Board (Vector.Vector Square)
+type Board = Vector.Vector Square
 
 -- bit representation of coordinate, as in 0x88
-type Index = Word8
+type Index = Int
 
 type Ray = [Index]
 
@@ -22,7 +22,7 @@ data Rank = Rank1 | Rank2 | Rank3 | Rank4 | Rank5 | Rank6 | Rank7 | Rank8
 data File = FileA | FileB | FileC | FileD | FileE | FileF | FileG | FileH
     deriving (Eq, Show, Bounded, Enum)
 
-type Direction = Int8
+type Direction = Int
 
 up :: Direction
 up = 0x10
@@ -38,7 +38,7 @@ left = -0x1
 
 -- 0x88 is length 128 vector
 emptyBoard :: Board
-emptyBoard = Board $ Vector.replicate 0x80 Nothing
+emptyBoard = Vector.replicate 0x80 Nothing
 
 -- as in 0x88
 indexToFile :: Index -> File
@@ -53,10 +53,6 @@ indexToFr bits = (indexToFile bits, indexToRank bits)
 frToIndex :: File -> Rank -> Index
 frToIndex file rank = fromIntegral $ (fromEnum rank `shiftL` 4) + fromEnum file
 
--- 8x8 coordinate
-indexToCoord :: Index -> Word8
-indexToCoord index = (index .&. 7) .|. ((index .&. 0x70) `shiftR` 1)
-
 -- uses 0x88 to check if a move is out of bounds
 move :: Index -> Direction -> Maybe Index
 move index dir = let dest = index + fromIntegral dir in
@@ -69,5 +65,6 @@ extend index dir len = catMaybes $ extend' (Just index) dir len
         extend' :: Maybe Index -> Direction -> Int -> [Maybe Index]
         extend' _ _ 0 = []
         extend' Nothing _ _ = []
-        extend' (Just index) dir len = move index dir : extend' (move index dir) dir (len-1)
+        extend' (Just index) dir len = let next = move index dir in
+            next : extend' next dir (len-1)
 

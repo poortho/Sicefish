@@ -29,12 +29,12 @@ version :: Version
 version = Version [0,1,0,0] []
 bindir, libdir, dynlibdir, datadir, libexecdir, sysconfdir :: FilePath
 
-bindir     = "D:\\Users\\Elvin Liu\\Desktop\\hq\\488b\\Sicefish\\.stack-work\\install\\f87f918b\\bin"
-libdir     = "D:\\Users\\Elvin Liu\\Desktop\\hq\\488b\\Sicefish\\.stack-work\\install\\f87f918b\\lib\\x86_64-windows-ghc-8.10.7\\sicefish-0.1.0.0-64mCRAScbV18bgdhLJPgcN-sicefish"
-dynlibdir  = "D:\\Users\\Elvin Liu\\Desktop\\hq\\488b\\Sicefish\\.stack-work\\install\\f87f918b\\lib\\x86_64-windows-ghc-8.10.7"
-datadir    = "D:\\Users\\Elvin Liu\\Desktop\\hq\\488b\\Sicefish\\.stack-work\\install\\f87f918b\\share\\x86_64-windows-ghc-8.10.7\\sicefish-0.1.0.0"
-libexecdir = "D:\\Users\\Elvin Liu\\Desktop\\hq\\488b\\Sicefish\\.stack-work\\install\\f87f918b\\libexec\\x86_64-windows-ghc-8.10.7\\sicefish-0.1.0.0"
-sysconfdir = "D:\\Users\\Elvin Liu\\Desktop\\hq\\488b\\Sicefish\\.stack-work\\install\\f87f918b\\etc"
+bindir     = "D:\\Users\\Elvin Liu\\Desktop\\hq\\488b\\Sicefish\\.stack-work\\install\\446830ca\\bin"
+libdir     = "D:\\Users\\Elvin Liu\\Desktop\\hq\\488b\\Sicefish\\.stack-work\\install\\446830ca\\lib\\x86_64-windows-ghc-8.10.4\\sicefish-0.1.0.0-H13Zytl7aywIKQ6Ir4IOuT-sicefish"
+dynlibdir  = "D:\\Users\\Elvin Liu\\Desktop\\hq\\488b\\Sicefish\\.stack-work\\install\\446830ca\\lib\\x86_64-windows-ghc-8.10.4"
+datadir    = "D:\\Users\\Elvin Liu\\Desktop\\hq\\488b\\Sicefish\\.stack-work\\install\\446830ca\\share\\x86_64-windows-ghc-8.10.4\\sicefish-0.1.0.0"
+libexecdir = "D:\\Users\\Elvin Liu\\Desktop\\hq\\488b\\Sicefish\\.stack-work\\install\\446830ca\\libexec\\x86_64-windows-ghc-8.10.4\\sicefish-0.1.0.0"
+sysconfdir = "D:\\Users\\Elvin Liu\\Desktop\\hq\\488b\\Sicefish\\.stack-work\\install\\446830ca\\etc"
 
 getBinDir, getLibDir, getDynLibDir, getDataDir, getLibexecDir, getSysconfDir :: IO FilePath
 getBinDir = catchIO (getEnv "sicefish_bindir") (\_ -> return bindir)
