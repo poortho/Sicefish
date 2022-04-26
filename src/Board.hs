@@ -45,6 +45,9 @@ downLeft = (-1, -1)
 downRight :: Direction
 downRight = (1, -1)
 
+addDirs :: Direction -> Direction -> Direction
+addDirs (x1, y1) (x2, y2) = (x1 + x2, y1 + y2)
+
 emptyBoard :: Board
 emptyBoard = Map.empty
 
