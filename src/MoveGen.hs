@@ -7,6 +7,7 @@ import Data.List as List
 import Data.Maybe as Maybe
 import qualified Data.Map as Map
 import Data.Maybe ( isNothing )
+import Move
 
 data PossibleRay = OnlyMove [Ray] | OnlyCapture [Ray] | MoveCapture [Ray]
 

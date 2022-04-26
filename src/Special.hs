@@ -2,7 +2,7 @@ module Special where
 
 import Pieces
 import Board
-import Game
+import Move
 import qualified Data.Map as Map
 
 data CastleType = Short | Long
@@ -12,6 +12,9 @@ data Castle = Castle Color CastleType
     deriving (Show, Eq, Ord)
 
 type CanCastle = Map.Map Castle Bool
+
+newtype EnPassant = EnPassant (Maybe Index)
+    deriving (Show, Eq)
 
 updateCastleFromCapture :: CanCastle -> Board -> Move -> CanCastle
 updateCastleFromCapture rights brd move = case Map.lookup (dest move) brd of
