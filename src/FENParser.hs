@@ -13,6 +13,7 @@ import Prelude hiding (filter)
 import Board
 import Game
 import Pieces
+import Special
 
 import Data.Void (Void)
 import Data.Char (isDigit, ord, digitToInt, toLower, isUpper, intToDigit)
@@ -20,7 +21,14 @@ import Data.Char (isDigit, ord, digitToInt, toLower, isUpper, intToDigit)
 type Parser = Parsec Void String
 
 parseFEN :: Parser GameState
-parseFEN = undefined 
+parseFEN = do
+  board <- (piecePlacement 0) <* space
+  color <- activeColor <* space
+  castling <- FENParser.canCastle <* space
+  enpassant <- FENParser.enPassant <* space
+  moveclock <- halfMoveClock <* space
+  movecount <- fullMoveNumber
+  return $ GameState board color (getPieceLoc board (Piece King White)) (getPieceLoc board (Piece King Black)) castling enpassant moveclock movecount
 
 piecePlacement :: Int -> Parser Board
 piecePlacement row
@@ -47,13 +55,25 @@ bPiece = char 'p' <|> char 'n' <|> char 'b' <|> char 'r' <|> char 'q' <|> char '
 wPiece :: Parser Char
 wPiece = char 'P' <|> char 'N' <|> char 'B' <|> char 'R' <|> char 'Q' <|> char 'K'
 
-canCastle = undefined -- todo when gamestate has castle state lol
+canCastle :: Parser Special.CanCastle
+canCastle = (const Map.empty <$> char '-') <|> (Map.unions <$> Text.Megaparsec.some castleChar)
+
+castleChar :: Parser Special.CanCastle
+castleChar = (flip (Map.singleton) True) <$> charToCastle <$> (char 'K' <|> char 'Q' <|> char 'k' <|> char 'q')
+
+charToCastle :: Char -> Castle
+charToCastle c = case c of
+  'K' -> Castle White Short
+  'Q' -> Castle White Long
+  'k' -> Castle Black Short
+  'q' -> Castle Black Long
+  _ -> undefined
 
 activeColor :: Parser Color
 activeColor = charToColor <$> (char 'w' <|> char 'b')
 
-enPassant :: Parser (Maybe Index)
-enPassant = (Just <$> (frToIndex <$> file <*> eprank)) <|> (const Nothing <$> char '-')
+enPassant :: Parser EnPassant
+enPassant = EnPassant <$> ((Just <$> (frToIndex <$> file <*> eprank)) <|> (const Nothing <$> char '-'))
 
 halfMoveClock:: Parser Int
 halfMoveClock = L.decimal
