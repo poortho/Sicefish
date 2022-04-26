@@ -1,12 +1,3 @@
-{-
----
-fulltitle: "In class exercise: XML parsing"
----
-
-In today's exercise you will use the definitions from the `Parsers` lecture to
-build a simple parser for `XML` data.
--}
-
 module FENParser where
 
 import Control.Applicative (Alternative (..))
@@ -16,11 +7,6 @@ import Text.Megaparsec.Char
 import Text.Megaparsec.Error
 import qualified Text.Megaparsec.Char.Lexer as L
 import qualified Data.Map as Map
-
-{-
-This exercise is based on the following definitions from the `Parsers`
-lecture. Make sure that you have downloaded the solution.
--}
 
 import System.IO
 import Prelude hiding (filter)
