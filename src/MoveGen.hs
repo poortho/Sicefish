@@ -8,6 +8,7 @@ import Data.Maybe as Maybe
 import qualified Data.Map as Map
 import Data.Maybe ( isNothing )
 import Move
+import Special
 
 data PossibleRay = OnlyMove [Ray] | OnlyCapture [Ray] | MoveCapture [Ray]
 
@@ -32,7 +33,7 @@ getPossibleRays index (Piece Pawn Black) = case indexToRank index of
     Rank7 -> OnlyMove (map (\dir -> extend index dir 2) [down]) : [OnlyCapture $ map (\dir -> extend index dir 1) [downLeft, downRight]]
     _ -> OnlyMove (map (\dir -> extend index dir 1) [down]) : [OnlyCapture $ map (\dir -> extend index dir 1) [downLeft, downRight]]
 getPossibleRays index (Piece Bishop _) = [MoveCapture $ map (\dir -> extend index dir 8) diagonals]
-getPossibleRays index (Piece Knight _) = [MoveCapture $ map (\dir -> extend index dir 1) [ (-1,  2), 
+getPossibleRays index (Piece Knight _) = [MoveCapture $ map (\dir -> extend index dir 1) [ (-1,  2),
                                                                                            (1,   2),
                                                                                            (2,   1),
                                                                                            (2,  -1),
@@ -45,35 +46,35 @@ getPossibleRays index (Piece Queen _) = [MoveCapture $ map (\dir -> extend index
 getPossibleRays index (Piece King _) = [MoveCapture $ map (\dir -> extend index dir 1) (cardinals ++ diagonals)]
 
 -- captures are valid if piece on target is opposite color
-rayValidCaptures :: Board -> Color -> Ray -> Ray
-rayValidCaptures brd color = filter (attacked brd color)
+rayValidCaptures :: GameState -> Color -> Ray -> Ray
+rayValidCaptures game color = filter $ \index -> isEnPassantIndex (enPassant game) color index || attacking game color index
     where
-        attacked brd color index = case Map.lookup index brd of
+        attacking game color index = case Map.lookup index (board game) of
             Just (Piece _ other) -> other /= color
             Nothing -> False
 
 -- ray continues as long as squares are not occupied
-rayValidMoves :: Board -> Ray -> Ray
-rayValidMoves brd = takeWhile (isNothing . flip Map.lookup brd)
+rayValidMoves :: GameState -> Ray -> Ray
+rayValidMoves game = takeWhile (isNothing . flip Map.lookup (board game))
 
 -- combination of above -- basically for anything that isnt a pawn lmao
-rayValidCaptureMoves :: Board -> Color -> Ray -> Ray
+rayValidCaptureMoves :: GameState -> Color -> Ray -> Ray
 rayValidCaptureMoves _ _ [] = []
-rayValidCaptureMoves brd color (index:rest) = case Map.lookup index brd of
+rayValidCaptureMoves game color (index:rest) = case Map.lookup index (board game) of
     Just (Piece _ other) -> [index | other /= color]
-    Nothing              -> index : rayValidCaptureMoves brd color rest
+    Nothing              -> index : rayValidCaptureMoves game color rest
 
-genValidRays :: Board -> Color -> [PossibleRay] -> Ray
-genValidRays brd color = concatMap (\case
-    OnlyMove rays -> concatMap (rayValidMoves brd) rays
-    OnlyCapture rays -> concatMap (rayValidCaptures brd color) rays
-    MoveCapture rays -> concatMap (rayValidCaptureMoves brd color) rays)
+genValidRays :: GameState -> Color -> [PossibleRay] -> Ray
+genValidRays game color = concatMap (\case
+    OnlyMove rays -> concatMap (rayValidMoves game) rays
+    OnlyCapture rays -> concatMap (rayValidCaptures game color) rays
+    MoveCapture rays -> concatMap (rayValidCaptureMoves game color) rays)
 
 -- very yucky
-isSquareAttacked :: Board -> Color -> Index -> Bool 
+isSquareAttacked :: Board -> Color -> Index -> Bool
 isSquareAttacked brd color index = let oppPieces = map (\p -> Piece p (swapColor color)) allPieces in
     any (\p -> any (rayAttacksSquare brd p) (getPossibleRays index p)) oppPieces
-        where 
+        where
             rayAttacksSquare :: Board -> Piece -> PossibleRay -> Bool
             rayAttacksSquare _ _ (OnlyMove _) = False
             rayAttacksSquare brd piece posRays = any (rayAttacksSquare' brd piece) $ getRays posRays
@@ -85,7 +86,7 @@ isSquareAttacked brd color index = let oppPieces = map (\p -> Piece p (swapColor
                         Nothing -> rayAttacksSquare' brd piece ray
 
 isPlayerInCheck :: GameState -> Bool
-isPlayerInCheck game = let color = player game in 
+isPlayerInCheck game = let color = player game in
     isSquareAttacked (board game) color (if color == White then whiteKing game else blackKing game)
 
 generateMoves :: GameState -> [GameState]
@@ -94,13 +95,13 @@ generateMoves game = filter (not . isPlayerInCheck) (concatMap (genPseudoLegal g
         genPseudoLegal :: GameState -> Index -> [GameState]
         genPseudoLegal game index = case Map.lookup index (board game) of
             Nothing -> []
-            Just piece@(Piece pType color) -> 
-                if color /= player game 
+            Just piece@(Piece pType color) ->
+                if color /= player game
                     then []
                     else case pType of
-                        King -> processRays game index $ filter (not . isSquareAttacked (board game) (player game)) 
-                                              (genValidRays (board game) (player game) (getPossibleRays index piece) ++ genCastling game)
-                        _    -> processRays game index $ genValidRays (board game) (player game) (getPossibleRays index piece) 
+                        King -> processRays game index $ filter (not . isSquareAttacked (board game) (player game))
+                                              (genValidRays game (player game) (getPossibleRays index piece) ++ genCastling game)
+                        _    -> processRays game index $ genValidRays game (player game) (getPossibleRays index piece)
 
 processRays :: GameState -> Index -> Ray -> [GameState]
 processRays game src dests = Maybe.mapMaybe (playMove game) $ concatMap (movesFromIndexes (board game) src) dests
@@ -114,4 +115,19 @@ movesFromIndexes brd src dest = case (Map.lookup src brd, indexToRank dest) of
         (Just _) -> [Move src dest Capture Nothing]
 
 genCastling :: GameState -> [Index]
-genCastling = undefined
+genCastling game
+    | isPlayerInCheck game = []
+    | otherwise = concatMap (\castle -> case Map.lookup castle (canCastle game) of
+                                            Just True -> genCastling' game castle
+                                            _         -> []) [Castle (player game) side | side <- [Short, Long]]
+        where
+            genCastling' :: GameState -> Castle -> [Index]
+            genCastling' game (Castle color side) = let dir = if side == Short then left else right
+                                                        len = if side == Short then 2 else 3
+                                                        src = if color == White then whiteKing game else blackKing game
+                                                        squaresToCheck = extend src dir len in
+                [last (extend src dir 2) | not (any (isOccupied (board game)) squaresToCheck || any (isSquareAttacked (board game) (player game)) squaresToCheck)]
+                    where
+                        isOccupied brd index = case Map.lookup index brd of
+                            Nothing -> False
+                            Just _ -> True

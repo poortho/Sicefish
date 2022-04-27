@@ -22,13 +22,13 @@ type Parser = Parsec Void String
 
 parseFEN :: Parser GameState
 parseFEN = do
-  board <- (piecePlacement 7) <* space
+  board <- piecePlacement 7 <* space
   color <- activeColor <* space
   castling <- FENParser.canCastle <* space
   enpassant <- FENParser.enPassant <* space
   moveclock <- halfMoveClock <* space
   movecount <- fullMoveNumber
-  return $ GameState board color (getPieceLoc board (Piece King White)) (getPieceLoc board (Piece King Black)) castling enpassant moveclock movecount
+  return $ GameState board color (getPieceLoc board (Piece King White)) (getPieceLoc board (Piece King Black)) castling enpassant moveclock movecount []
 
 piecePlacement :: Int -> Parser Board
 piecePlacement row
@@ -38,7 +38,7 @@ piecePlacement row
 pieceRow :: Int -> Int -> Parser Board
 pieceRow row col
   | col > 7 = pure Map.empty -- row is fully parsed
-  | otherwise = (Map.union <$> pieceTile row col <*> pieceRow row (col+1)) <|> do
+  | otherwise = Map.union <$> pieceTile row col <*> pieceRow row (col+1) <|> do
       digit <- boundedDigit 1 (8-col)
       pieceRow row (col+digit)
 
@@ -55,10 +55,10 @@ wPiece :: Parser Char
 wPiece = char 'P' <|> char 'N' <|> char 'B' <|> char 'R' <|> char 'Q' <|> char 'K'
 
 canCastle :: Parser Special.CanCastle
-canCastle = (const Map.empty <$> char '-') <|> (Map.unions <$> Text.Megaparsec.some castleChar)
+canCastle = Map.empty <$ char '-' <|> Map.unions <$> Text.Megaparsec.some castleChar
 
 castleChar :: Parser Special.CanCastle
-castleChar = (flip (Map.singleton) True) <$> charToCastle <$> (char 'K' <|> char 'Q' <|> char 'k' <|> char 'q')
+castleChar = (`Map.singleton` True) . charToCastle <$> (char 'K' <|> char 'Q' <|> char 'k' <|> char 'q')
 
 charToCastle :: Char -> Castle
 charToCastle c = case c of
@@ -72,7 +72,7 @@ activeColor :: Parser Color
 activeColor = charToColor <$> (char 'w' <|> char 'b')
 
 enPassant :: Parser EnPassant
-enPassant = EnPassant <$> ((Just <$> (frToIndex <$> file <*> eprank)) <|> (const Nothing <$> char '-'))
+enPassant = EnPassant <$> (Just <$> (frToIndex <$> file <*> eprank) <|> (Nothing <$ char '-'))
 
 halfMoveClock:: Parser Int
 halfMoveClock = L.decimal
@@ -81,13 +81,13 @@ fullMoveNumber :: Parser Int
 fullMoveNumber = L.decimal
 
 file :: Parser File
-file = toEnum <$> (\c -> ord c - ord 'a') <$> satisfy isFile
+file = toEnum . (\c -> ord c - ord 'a') <$> satisfy isFile
 
 rank :: Parser Rank
-rank = toEnum <$> (\x -> x-1) <$> digitToInt <$> satisfy isRank
+rank = (toEnum <$> (\x -> x-1)) . digitToInt <$> satisfy isRank
 
 eprank :: Parser Rank
-eprank = toEnum <$> (\x -> x-1) <$> digitToInt <$> (char '3' <|> char '6')
+eprank = (toEnum <$> (\x -> x-1)) . digitToInt <$> (char '3' <|> char '6')
 
 {- isNonzeroDigit :: Char -> Bool
 isNonzeroDigit c = ord c <= ord '9' && ord c >= ord '1' -}

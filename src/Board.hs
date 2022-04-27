@@ -87,4 +87,4 @@ startBoard = Map.fromList $ [((0, 0), Piece Rook White), ((1, 0), Piece Knight W
                             [((i, 1), Piece Pawn White) | i <- [0..7]] ++ [((i, 6), Piece Pawn Black) | i <- [0..7]]
 
 getPieceLoc :: Board -> Piece -> Index
-getPieceLoc b p = head (Map.keys (Map.filter (\x -> x == p) b))
+getPieceLoc b p = head (Map.keys (Map.filter (== p) b))

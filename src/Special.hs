@@ -41,3 +41,22 @@ updateCastling rights brd move = let updateCapture = updateCastleFromCapture rig
 
 defaultCastling :: CanCastle
 defaultCastling = foldr (`Map.insert` True) Map.empty [Castle color side | color <- [White, Black], side <- [Short, Long]]
+
+defaultEnPassant :: EnPassant
+defaultEnPassant = EnPassant Nothing 
+
+updateEnPassant :: Board -> Move -> EnPassant
+updateEnPassant brd (Move src dest _ _) = case (Map.lookup src brd, indexToRank src, indexToRank dest) of
+    (Just (Piece Pawn White), Rank2, Rank4) -> EnPassant (Just (frToIndex (indexToFile src) Rank3))
+    (Just (Piece Pawn Black), Rank7, Rank5) -> EnPassant (Just (frToIndex (indexToFile src) Rank6))
+    _ -> EnPassant Nothing
+
+isEnPassantIndex :: EnPassant -> Color -> Index -> Bool
+isEnPassantIndex (EnPassant (Just ep)) White index = (indexToRank ep == Rank6) && index == ep
+isEnPassantIndex (EnPassant (Just ep)) Black index = (indexToRank ep == Rank3) && index == ep
+isEnPassantIndex (EnPassant Nothing) _ _ = False
+
+getPawnIndexEP :: EnPassant -> Color -> Index -> Maybe Index
+getPawnIndexEP ep color index@(file, rank)
+    | isEnPassantIndex ep color index = Just (file, if color == White then rank-1 else rank+1)
+    | otherwise = Nothing
