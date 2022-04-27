@@ -21,5 +21,10 @@ data GameState = GameState {
 playMove :: GameState -> Move -> Maybe GameState
 playMove (GameState brd toMove wk bk _ _ _ _) move@(Move src _ _ _) = undefined
 
+playMoves :: Maybe GameState -> [Move] -> Maybe GameState
+playMoves Nothing _ = Nothing
+playMoves state [] = state
+playMoves (Just state) (x:xs) = playMoves (playMove state x) xs
+
 startState :: GameState
 startState = GameState startBoard White (0, 4) (7, 4) defaultCastling (EnPassant Nothing) 0 1
