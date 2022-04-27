@@ -22,7 +22,7 @@ type Parser = Parsec Void String
 
 parseFEN :: Parser GameState
 parseFEN = do
-  board <- (piecePlacement 0) <* space
+  board <- (piecePlacement 7) <* space
   color <- activeColor <* space
   castling <- FENParser.canCastle <* space
   enpassant <- FENParser.enPassant <* space
@@ -32,9 +32,8 @@ parseFEN = do
 
 piecePlacement :: Int -> Parser Board
 piecePlacement row
-  | row > 7 = undefined
-  | row == 7 = pieceRow row 0
-  | otherwise = Map.union <$> pieceRow row 0 <* char '/' <*> piecePlacement (row+1)
+  | row == 0 = pieceRow row 0
+  | otherwise = Map.union <$> pieceRow row 0 <* char '/' <*> piecePlacement (row-1)
 
 pieceRow :: Int -> Int -> Parser Board
 pieceRow row col

@@ -4,6 +4,7 @@ import Pieces
 import Board
 import Move
 import Special
+import qualified Data.Map as Map
 
 data GameState = GameState {
     board :: Board,
@@ -19,3 +20,6 @@ data GameState = GameState {
 -- TODO :smile:
 playMove :: GameState -> Move -> Maybe GameState
 playMove (GameState brd toMove wk bk _ _ _ _) move@(Move src _ _ _) = undefined
+
+startState :: GameState
+startState = GameState startBoard White (0, 4) (7, 4) defaultCastling (EnPassant Nothing) 0 1
