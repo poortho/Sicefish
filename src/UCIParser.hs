@@ -9,8 +9,9 @@ import FENParser
 import Data.Maybe
 import Board
 import Pieces
+import qualified Text.Megaparsec.Char.Lexer as L
 
-data UCICommand = UCI | UCINewGame | IsReady | Position GameState | Go | Quit
+data UCICommand = UCI | UCINewGame | IsReady | Position GameState | Go TimeControl | Quit
   deriving (Eq, Show)
 
 parseUCICmd :: Parser UCICommand
@@ -45,6 +46,7 @@ unwrapMaybeList (Just l) = l
 
 parseGo :: Parser UCICommand
 parseGo = undefined
+-- parseGo = Go <$> (string "go" *> optional (space *> (string "btime" <|> string "wtime") *> L.decimal))
 
 parseSimpleCmd :: Parser UCICommand
 parseSimpleCmd = strToCmd <$> (string "ucinewgame" <|> string "uci" <|> string "quit" <|> string "isready")

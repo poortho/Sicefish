@@ -17,6 +17,7 @@ main = do
       UCINewGame -> putStr "" -- do nothing?
       IsReady -> putStrLn "readyok" -- apparently this can be sent while calculating and we need to respond immediately (???)
       Position state -> putStrLn "game state todo"
+      Go t -> putStrLn "go todo"
       Quit -> exitSuccess
       _ -> putStrLn "not implemented"
   main

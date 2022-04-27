@@ -17,6 +17,13 @@ data GameState = GameState {
     moveCounter :: Int -- not sure if necessary, but it's in FEN
 } deriving (Eq, Show)
 
+data TimeControl = TimeControl {
+    wtime :: Int,
+    btime :: Int,
+    winc :: Int,
+    binc :: Int
+} deriving (Eq, Show)
+
 -- TODO :smile:
 playMove :: GameState -> Move -> Maybe GameState
 playMove (GameState brd toMove wk bk _ _ _ _) move@(Move src _ _ _) = undefined
