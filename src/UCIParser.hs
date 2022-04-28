@@ -14,8 +14,10 @@ import qualified Text.Megaparsec.Char.Lexer as L
 data UCICommand = UCI | UCINewGame | IsReady | Position GameState | Go TimeControl | Quit
   deriving (Eq, Show)
 
+data TimeControlCmd = WTime Int | BTime Int | WInc Int | BInc Int
+
 parseUCICmd :: Parser UCICommand
-parseUCICmd = parseSimpleCmd <|> parsePosition -- <|> parseGo
+parseUCICmd = parseSimpleCmd <|> parsePosition <|> parseGo
 
 parsePosition :: Parser UCICommand
 parsePosition = Position <$> fromJust <$> (playMoves <$> (Just <$> (string "position" *> space *> (parseFEN <|> (const startState <$> string "startpos")))) <*>
@@ -45,8 +47,28 @@ unwrapMaybeList Nothing = []
 unwrapMaybeList (Just l) = l
 
 parseGo :: Parser UCICommand
-parseGo = undefined
--- parseGo = Go <$> (string "go" *> optional (space *> (string "btime" <|> string "wtime") *> L.decimal))
+parseGo = Go <$> applyTimeCmds <$> (string "go" *> space *> sepBy parseGoArg space)
+
+applyTimeCmds :: [TimeControlCmd] -> TimeControl
+applyTimeCmds = foldr applyTimeCmd (TimeControl 0 0 0 0)
+
+applyTimeCmd :: TimeControlCmd -> TimeControl -> TimeControl
+applyTimeCmd cmd (TimeControl wt bt wi bi) = case cmd of
+  WTime i -> TimeControl i bt wi bi
+  BTime i -> TimeControl wt i wi bi
+  WInc i -> TimeControl wt bt i bi
+  BInc i -> TimeControl wt bt wi i
+
+parseGoArg :: Parser TimeControlCmd
+parseGoArg = goArgToCmd <$> (string "wtime" <|> string "btime" <|> string "winc" <|> string "binc") <* space <*> L.decimal
+
+goArgToCmd :: String -> Int -> TimeControlCmd
+goArgToCmd s i = case s of
+  "wtime" -> WTime i
+  "btime" -> BTime i
+  "winc" -> WInc i
+  "binc" -> BInc i
+  _ -> undefined
 
 parseSimpleCmd :: Parser UCICommand
 parseSimpleCmd = strToCmd <$> (string "ucinewgame" <|> string "uci" <|> string "quit" <|> string "isready")
