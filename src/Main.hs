@@ -19,5 +19,4 @@ main = do
       Position state -> putStrLn "game state todo"
       Go t -> putStrLn "go todo"
       Quit -> exitSuccess
-      _ -> putStrLn "not implemented"
   main
