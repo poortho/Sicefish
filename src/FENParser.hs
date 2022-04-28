@@ -43,7 +43,7 @@ pieceRow row col
       pieceRow row (col+digit)
 
 pieceTile :: Int -> Int -> Parser Board
-pieceTile i j = Map.singleton (i, j) <$> piece
+pieceTile i j = Map.singleton (j, i) <$> piece
 
 piece :: Parser Piece
 piece = charToPiece <$> (bPiece <|> wPiece)
