@@ -20,14 +20,14 @@ parseUCICmd :: Parser UCICommand
 parseUCICmd = parseSimpleCmd <|> parsePosition <|> parseGo
 
 parsePosition :: Parser UCICommand
-parsePosition = Position <$> fromJust <$> (playMoves <$> (Just <$> (string "position" *> space *> (parseFEN <|> (const startState <$> string "startpos")))) <*>
+parsePosition = Position . fromJust <$> (playMoves <$> (Just <$> (string "position" *> space *> (parseFEN <|> (startState <$ string "startpos")))) <*>
   (unwrapMaybeList <$> optional (space *> string "moves" *> space *> sepBy1 parseMove space)))
 
 parseMove :: Parser Move
 parseMove = parseToMove <$> (frToIndex <$> file <*> rank) <*>  (frToIndex <$> file <*> rank) <*> promoChar
 
 parseToMove :: Index -> Index -> Maybe Char -> Move
-parseToMove src dst c = Move src dst (if c == Nothing then Quiet else Promotion) (maybeToPromo c)
+parseToMove src dst c = Move src dst (if isNothing c then Quiet else Promotion) (maybeToPromo c)
 
 maybeToPromo :: Maybe Char -> Maybe PieceType
 maybeToPromo Nothing = Nothing
@@ -47,7 +47,7 @@ unwrapMaybeList Nothing = []
 unwrapMaybeList (Just l) = l
 
 parseGo :: Parser UCICommand
-parseGo = Go <$> applyTimeCmds <$> (string "go" *> space *> sepBy parseGoArg space)
+parseGo = Go . applyTimeCmds <$> (string "go" *> space *> sepBy parseGoArg space)
 
 applyTimeCmds :: [TimeControlCmd] -> TimeControl
 applyTimeCmds = foldr applyTimeCmd (TimeControl 0 0 0 0)
