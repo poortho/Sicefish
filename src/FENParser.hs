@@ -119,3 +119,9 @@ charToPiece c = case toLower c of
   'k' -> Piece King col
   _ -> undefined
   where col = if isUpper c then White else Black
+
+
+doParse :: String -> GameState
+doParse s = case parse parseFEN "" s of
+  Left err -> startState
+  Right g -> g

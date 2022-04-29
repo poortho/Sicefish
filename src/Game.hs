@@ -31,13 +31,13 @@ playMove game@(GameState brd toMove wk bk rights ep clock counter moveList) move
     Nothing -> Nothing -- shouldn't happen ever
     Just piece@(Piece pType pColor) -> Just $ GameState (updateBoard brd piece move ep)
                                                         (swapColor toMove)
-                                                        (if from == wk then from else wk)
-                                                        (if from == bk then from else bk)
+                                                        (if from == wk then to else wk)
+                                                        (if from == bk then to else bk)
                                                         (updateCastling rights brd move)
                                                         (updateEnPassant brd move)
                                                         (updateMoveClock clock brd pType to)
                                                         (counter + 1)
-                                                        (move : moveList)
+                                                        (moveList ++ [move])
 
 -- insanely ugly LOL
 updateBoard :: Board -> Piece -> Move -> EnPassant -> Board
@@ -64,7 +64,7 @@ updateBoard brd pawn@(Piece Pawn color) (Move from to _ _) ep = case getPawnInde
     Just captured -> let brd' = Map.insert to pawn brd in
                       foldr Map.delete brd' [captured, from]
 updateBoard brd piece (Move from to _ _) _ = let brd' = Map.insert to piece brd in
-                                                Map.delete to brd'
+                                                Map.delete from brd'
 
 updateMoveClock :: Int -> Board -> PieceType -> Index -> Int
 updateMoveClock clock brd pType to
