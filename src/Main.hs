@@ -3,9 +3,14 @@ module Main where
 import UCIParser
 import Text.Megaparsec
 import System.Exit
+import Control.Monad.State
+import Game
 
 main :: IO ()
-main = do
+main = runUCI startState
+  
+runUCI :: GameState -> IO ()
+runUCI state = do
   line <- getLine
   case parse parseUCICmd "" line of
     Left bundle -> putStr (errorBundlePretty bundle)
@@ -16,7 +21,7 @@ main = do
         putStrLn "uciok"
       UCINewGame -> putStr "" -- do nothing?
       IsReady -> putStrLn "readyok" -- apparently this can be sent while calculating and we need to respond immediately (???)
-      Position state -> putStrLn "game state todo"
-      Go t -> putStrLn "go todo"
+      Position new_state -> runUCI new_state
+      Go t -> putStrLn (show state) -- todo
       Quit -> exitSuccess
-  main
+  runUCI state
