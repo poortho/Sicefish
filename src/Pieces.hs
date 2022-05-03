@@ -19,3 +19,10 @@ swapColor :: Color -> Color
 swapColor White = Black
 swapColor Black = White
 
+pieceToChar :: PieceType -> Char
+pieceToChar pt = case pt of
+    Bishop -> 'b'
+    Knight -> 'n'
+    Rook -> 'r'
+    Queen -> 'q'
+    _ -> undefined -- only called for promo rn

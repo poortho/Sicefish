@@ -4,6 +4,7 @@ import Pieces
 import qualified Data.Map as Map
 import Data.Maybe as Maybe (catMaybes)
 import Data.List
+import Data.Char
 
 type Board = Map.Map (Int, Int) Piece
 
@@ -13,10 +14,16 @@ type Index = (Int, Int)
 type Ray = [Index]
 
 data Rank = Rank1 | Rank2 | Rank3 | Rank4 | Rank5 | Rank6 | Rank7 | Rank8
-    deriving (Eq, Show, Bounded, Enum)
+    deriving (Eq, Bounded, Enum)
 
 data File = FileA | FileB | FileC | FileD | FileE | FileF | FileG | FileH
-    deriving (Eq, Show, Bounded, Enum)
+    deriving (Eq, Bounded, Enum)
+
+instance Show Rank where
+    show r = [chr $ (fromEnum r) + (ord '1')]
+
+instance Show File where
+    show f = [chr $ (fromEnum f) + (ord 'a')]
 
 type Direction = (Int, Int)
 
