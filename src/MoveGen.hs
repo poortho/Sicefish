@@ -146,3 +146,7 @@ getMoves ((GameState brd _ _ _ _ _ _ _ moves) : rest) = parseMove (last moves) b
         getPieceType brd index = case Map.lookup index brd of
             Nothing -> "LOLWRONG"
             Just (Piece ptype _) -> show ptype
+
+getLastMove :: GameState -> Move
+getLastMove (GameState _ _ _ _ _ _ _ _ []) = undefined -- no move L
+getLastMove (GameState _ _ _ _ _ _ _ _ l) = last l
