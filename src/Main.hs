@@ -9,7 +9,7 @@ import Search
 
 main :: IO ()
 main = runUCI startState
-  
+
 runUCI :: GameState -> IO ()
 runUCI state = do
   line <- getLine
