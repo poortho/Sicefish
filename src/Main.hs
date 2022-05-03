@@ -5,6 +5,7 @@ import Text.Megaparsec
 import System.Exit
 import Control.Monad.State
 import Game
+import Search
 
 main :: IO ()
 main = runUCI startState
@@ -22,6 +23,6 @@ runUCI state = do
       UCINewGame -> putStr "" -- do nothing?
       IsReady -> putStrLn "readyok" -- apparently this can be sent while calculating and we need to respond immediately (???)
       Position new_state -> runUCI new_state
-      Go t -> putStrLn (show state) -- todo
+      Go t -> putStrLn (show state) -- todo: do search
       Quit -> exitSuccess
   runUCI state
