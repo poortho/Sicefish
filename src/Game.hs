@@ -56,8 +56,8 @@ updateBoard brd king@(Piece King color) (Move from to _ _) _ = case (indexToFile
                         Map.delete rookIndex brd'''
     _ -> let brd' = Map.insert to king brd in
                 Map.delete from brd'
-updateBoard brd pawn (Move from to _ (Just piece)) _ = let brd' = Map.delete from brd in
-                                                        Map.insert to pawn brd'
+updateBoard brd pawn@(Piece Pawn color) (Move from to _ (Just piece)) _ = let brd' = Map.delete from brd in
+                                                        Map.insert to (Piece piece color) brd'
 updateBoard brd pawn@(Piece Pawn color) (Move from to _ _) ep = case getPawnIndexEP ep color to of
     Nothing -> let brd' = Map.insert to pawn brd in
                 Map.delete from brd'

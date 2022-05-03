@@ -64,7 +64,7 @@ indexToFr index = (indexToFile index, indexToRank index)
 frToIndex :: File -> Rank -> Index
 frToIndex file rank = (fromEnum file, fromEnum rank)
 
--- uses 0x88 to check if a move is out of bounds
+-- check if a move is out of bounds
 move :: Index -> Direction -> Maybe Index
 move (xInd, yInd) (xDir, yDir) = let dest = (xInd + xDir, yInd + yDir) in
     if (xInd + xDir > 7) || (xInd + xDir < 0) || (yInd + yDir > 7) || (yInd + yDir < 0) then Nothing else Just dest

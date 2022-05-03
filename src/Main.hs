@@ -9,7 +9,7 @@ import Search
 
 main :: IO ()
 main = runUCI startState
-  
+
 runUCI :: GameState -> IO ()
 runUCI state = do
   line <- getLine
@@ -23,6 +23,6 @@ runUCI state = do
       UCINewGame -> putStr "" -- do nothing?
       IsReady -> putStrLn "readyok" -- apparently this can be sent while calculating and we need to respond immediately (???)
       Position new_state -> runUCI new_state
-      Go t -> putStrLn (show state) -- todo: do search
+      Go t -> print state -- todo: do search
       Quit -> exitSuccess
   runUCI state
