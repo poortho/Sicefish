@@ -6,9 +6,12 @@ import System.Exit
 import Control.Monad.State
 import Game
 import Search
+import System.IO
 
 main :: IO ()
-main = runUCI startState
+main = do
+  hSetBuffering stdout NoBuffering
+  runUCI startState
 
 runUCI :: GameState -> IO ()
 runUCI state = do
@@ -25,4 +28,5 @@ runUCI state = do
       Position new_state -> runUCI new_state
       Go t -> putStrLn $ "bestmove " ++ (show (searchPosition state)) -- todo: do search
       Quit -> exitSuccess
+      None -> putStr ""
   runUCI state
