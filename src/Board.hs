@@ -20,10 +20,10 @@ data File = FileA | FileB | FileC | FileD | FileE | FileF | FileG | FileH
     deriving (Eq, Bounded, Enum)
 
 instance Show Rank where
-    show r = [chr $ (fromEnum r) + (ord '1')]
+    show r = [chr $ fromEnum r + ord '1']
 
 instance Show File where
-    show f = [chr $ (fromEnum f) + (ord 'a')]
+    show f = [chr $ fromEnum f + ord 'a']
 
 type Direction = (Int, Int)
 
@@ -74,7 +74,7 @@ frToIndex file rank = (fromEnum file, fromEnum rank)
 -- check if a move is out of bounds
 move :: Index -> Direction -> Maybe Index
 move (xInd, yInd) (xDir, yDir) = let dest = (xInd + xDir, yInd + yDir) in
-    if (xInd + xDir > 7) || (xInd + xDir < 0) || (yInd + yDir > 7) || (yInd + yDir < 0) then Nothing else Just dest
+    if xInd + xDir > 7 || xInd + xDir < 0 || yInd + yDir > 7 || yInd + yDir < 0 then Nothing else Just dest
 
 -- generate a ray of some length in a given direction
 extend :: Index -> Direction -> Int -> Ray

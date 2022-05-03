@@ -14,5 +14,5 @@ data Move = Move {
 } deriving Eq
 
 instance Show Move where
-    show (Move src dst _ Nothing) = (show (fst (indexToFr src))) ++ (show (snd (indexToFr src))) ++ (show (fst (indexToFr dst))) ++ (show (snd (indexToFr dst)))
-    show (Move src dst mt (Just promo)) = (show (Move src dst mt Nothing)) ++ [pieceToChar promo]
+    show (Move src dst _ Nothing) = show (fst (indexToFr src)) ++ show (snd (indexToFr src)) ++ show (fst (indexToFr dst)) ++ show (snd (indexToFr dst))
+    show (Move src dst mt (Just promo)) = show (Move src dst mt Nothing) ++ [pieceToChar promo]
