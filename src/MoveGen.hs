@@ -10,6 +10,7 @@ import qualified Data.Map as Map
 import Data.Maybe ( isNothing )
 import Move
 import Special
+import Data.Function.Memoize
 -- for debugging purposes
 import Control.Monad (mapM_)
 
@@ -29,14 +30,17 @@ getRays (MoveCapture rays) = rays
 
 -- YAY FUN
 getPossibleRays :: Index -> Piece -> [PossibleRay]
-getPossibleRays index (Piece Pawn White) = case indexToRank index of
+getPossibleRays = memoize2 getPossibleRays2
+
+getPossibleRays2 :: Index -> Piece -> [PossibleRay]
+getPossibleRays2 index (Piece Pawn White) = case indexToRank index of
     Rank2 -> OnlyMove (map (\dir -> extend index dir 2) [up]) : [OnlyCapture $ map (\dir -> extend index dir 1) [upLeft, upRight]]
     _ -> OnlyMove (map (\dir -> extend index dir 1) [up]) : [OnlyCapture $ map (\dir -> extend index dir 1) [upLeft, upRight]]
-getPossibleRays index (Piece Pawn Black) = case indexToRank index of
+getPossibleRays2 index (Piece Pawn Black) = case indexToRank index of
     Rank7 -> OnlyMove (map (\dir -> extend index dir 2) [down]) : [OnlyCapture $ map (\dir -> extend index dir 1) [downLeft, downRight]]
     _ -> OnlyMove (map (\dir -> extend index dir 1) [down]) : [OnlyCapture $ map (\dir -> extend index dir 1) [downLeft, downRight]]
-getPossibleRays index (Piece Bishop _) = [MoveCapture $ map (\dir -> extend index dir 8) diagonals]
-getPossibleRays index (Piece Knight _) = [MoveCapture $ map (\dir -> extend index dir 1) [ (-1,  2),
+getPossibleRays2 index (Piece Bishop _) = [MoveCapture $ map (\dir -> extend index dir 8) diagonals]
+getPossibleRays2 index (Piece Knight _) = [MoveCapture $ map (\dir -> extend index dir 1) [ (-1,  2),
                                                                                            (1,   2),
                                                                                            (2,   1),
                                                                                            (2,  -1),
@@ -44,9 +48,9 @@ getPossibleRays index (Piece Knight _) = [MoveCapture $ map (\dir -> extend inde
                                                                                            (-1, -2),
                                                                                            (-2, -1),
                                                                                            (-2,  1) ]]
-getPossibleRays index (Piece Rook _) = [MoveCapture $ map (\dir -> extend index dir 8) cardinals]
-getPossibleRays index (Piece Queen _) = [MoveCapture $ map (\dir -> extend index dir 8) (cardinals ++ diagonals)]
-getPossibleRays index (Piece King _) = [MoveCapture $ map (\dir -> extend index dir 1) (cardinals ++ diagonals)]
+getPossibleRays2 index (Piece Rook _) = [MoveCapture $ map (\dir -> extend index dir 8) cardinals]
+getPossibleRays2 index (Piece Queen _) = [MoveCapture $ map (\dir -> extend index dir 8) (cardinals ++ diagonals)]
+getPossibleRays2 index (Piece King _) = [MoveCapture $ map (\dir -> extend index dir 1) (cardinals ++ diagonals)]
 
 -- captures are valid if piece on target is opposite color
 rayValidCaptures :: GameState -> Color -> Ray -> Ray
