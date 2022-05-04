@@ -38,6 +38,7 @@ executable sicefish
                      , megaparsec  
                      , containers                 
                      , mtl
+                     , vector
   default-language:    Haskell2010
   ghc-options:         -Wno-type-defaults -fwarn-incomplete-patterns
   other-modules:       Pieces,

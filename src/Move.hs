@@ -4,7 +4,7 @@ import Pieces
 import Board
 
 data MoveType = Capture | Promotion | Quiet
-    deriving (Eq, Show)
+    deriving (Eq, Show, Ord)
 
 data Move = Move {
     src :: Index,

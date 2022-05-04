@@ -91,7 +91,7 @@ isPlayerInCheck :: GameState -> Color -> Bool
 isPlayerInCheck game color = isSquareAttacked (board game) color (if color == White then whiteKing game else blackKing game)
 
 generateMoves :: GameState -> [GameState]
-generateMoves game = filter (not . flip isPlayerInCheck (player game)) (concatMap (genPseudoLegal game) [(r, f) | r <- [0..7], f <- [0..7]])
+generateMoves game = sortOn (moveType . last . moves) $ filter (not . flip isPlayerInCheck (player game)) (concatMap (genPseudoLegal game) [(r, f) | r <- [0..7], f <- [0..7]])
     where
         genPseudoLegal :: GameState -> Index -> [GameState]
         genPseudoLegal game index = case Map.lookup index (board game) of
