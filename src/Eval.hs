@@ -4,6 +4,7 @@ import Pieces
 import Game
 import Board
 import qualified Data.Map as Map
+import qualified Data.Vector as V
 
 evalPosition :: GameState -> Int
 evalPosition s = materialDiff s + pieceSquare s
@@ -27,54 +28,54 @@ pieceSquare (GameState board _ _ _ _ _ _ _ _) = Map.foldrWithKey (\k v a -> a + 
 
 pieceSquareCalc :: Index -> Piece -> Int
 pieceSquareCalc (i, j) (Piece pt col) = case pt of
-  Knight -> g $ (f pieceSquareKnight) !! j !! i
-  Pawn -> g $ (f pieceSquarePawn) !! j !! i
-  Bishop -> g $ (f pieceSquareBishop) !! j !! i
-  Rook -> g $ (f pieceSquareBishop) !! j !! i
+  Knight -> g $ pieceSquareKnight V.! f j V.! i
+  Pawn -> g $ pieceSquarePawn V.! f j V.! i
+  Bishop -> g $ pieceSquareBishop V.! f j V.! i
+  Rook -> g $ pieceSquareBishop V.! f j V.! i
   _ -> 0
-  where f = if col == White then id else reverse
+  where f = if col == White then id else \x -> 7-x
         g = if col == White then id else negate
 
-pieceSquarePawn :: [[Int]]
-pieceSquarePawn = reverse [ -- reverse it coz (0,0) is a1 in our code
-  [0,   0,   0,   0,   0,   0,   0,   0],
-  [5,  10,  15,  20,  20,  15,  10,   5],
-  [4,   8,  12,  16,  16,  12,   8,   4],
-  [3,   6,   9,  12,  12,   9,   6,   3],
-  [2,   4,   6,   8,   8,   6,   4,   2],
-  [1,   2,   3, -10, -10,   3,   2,   1],
-  [0,   0,   0, -40, -40,   0,   0,   0],
-  [0,   0,   0,   0,   0,   0,   0,   0]]
+pieceSquarePawn :: V.Vector (V.Vector Int)
+pieceSquarePawn = V.fromList $ reverse [ -- reverse it coz (0,0) is a1 in our code
+  V.fromList [0,   0,   0,   0,   0,   0,   0,   0],
+  V.fromList [5,  10,  15,  20,  20,  15,  10,   5],
+  V.fromList [4,   8,  12,  16,  16,  12,   8,   4],
+  V.fromList [3,   6,   9,  12,  12,   9,   6,   3],
+  V.fromList [2,   4,   6,   8,   8,   6,   4,   2],
+  V.fromList [1,   2,   3, -10, -10,   3,   2,   1],
+  V.fromList [0,   0,   0, -40, -40,   0,   0,   0],
+  V.fromList [0,   0,   0,   0,   0,   0,   0,   0]]
 
-pieceSquareKnight :: [[Int]]
-pieceSquareKnight = [ -- symmetric, no need to reverse
-  [-10, -10, -10, -10, -10, -10, -10, -10],
-  [-10,   0,   0,   0,   0,   0,   0, -10],
-  [-10,   0,   5,   5,   5,   5,   0, -10],
-  [-10,   0,   5,  10,  10,   5,   0, -10],
-  [-10,   0,   5,  10,  10,   5,   0, -10],
-  [-10,   0,   5,   5,   5,   5,   0, -10],
-  [-10,   0,   0,   0,   0,   0,   0, -10],
-  [-10, -30, -10, -10, -10, -10, -30, -10]]
+pieceSquareKnight :: V.Vector (V.Vector Int)
+pieceSquareKnight = V.fromList [ -- symmetric, no need to reverse
+  V.fromList [-10, -10, -10, -10, -10, -10, -10, -10],
+  V.fromList [-10,   0,   0,   0,   0,   0,   0, -10],
+  V.fromList [-10,   0,   5,   5,   5,   5,   0, -10],
+  V.fromList [-10,   0,   5,  10,  10,   5,   0, -10],
+  V.fromList [-10,   0,   5,  10,  10,   5,   0, -10],
+  V.fromList [-10,   0,   5,   5,   5,   5,   0, -10],
+  V.fromList [-10,   0,   0,   0,   0,   0,   0, -10],
+  V.fromList [-10, -30, -10, -10, -10, -10, -30, -10]]
 
-pieceSquareBishop :: [[Int]]
-pieceSquareBishop = [ -- symmetric, no need to reverse
-  [-10, -10, -10, -10, -10, -10, -10, -10],
-  [-10,  10,   0,   0,   0,   0,  10, -10],
-  [-10,   0,   5,   5,   5,   5,   0, -10],
-  [-10,   0,   5,  10,  10,   5,   0, -10],
-  [-10,   0,   5,  10,  10,   5,   0, -10],
-  [-10,   0,   5,   5,   5,   5,   0, -10],
-  [-10,  10,   0,   0,   0,   0,  10, -10],
-  [-10, -30, -10, -10, -10, -10, -30, -10]]
+pieceSquareBishop :: V.Vector (V.Vector Int)
+pieceSquareBishop = V.fromList [ -- symmetric, no need to reverse
+  V.fromList [-10, -10, -10, -10, -10, -10, -10, -10],
+  V.fromList [-10,  10,   0,   0,   0,   0,  10, -10],
+  V.fromList [-10,   0,   5,   5,   5,   5,   0, -10],
+  V.fromList [-10,   0,   5,  10,  10,   5,   0, -10],
+  V.fromList [-10,   0,   5,  10,  10,   5,   0, -10],
+  V.fromList [-10,   0,   5,   5,   5,   5,   0, -10],
+  V.fromList [-10,  10,   0,   0,   0,   0,  10, -10],
+  V.fromList [-10, -30, -10, -10, -10, -10, -30, -10]]
 
-pieceSquareRook :: [[Int]]
-pieceSquareRook = reverse [ -- favor 7th rank rooks
-  [0,   0,   0,   0,   0,   0,   0,   0],
-  [20, 20,  20,  20,  20,  20,  20,  20],
-  [0,   0,   0,   0,   0,   0,   0,   0],
-  [0,   0,   0,   0,   0,   0,   0,   0],
-  [0,   0,   0,   0,   0,   0,   0,   0],
-  [0,   0,   0,   0,   0,   0,   0,   0],
-  [0,   0,   0,   0,   0,   0,   0,   0],
-  [0,   0,   0,   0,   0,   0,   0,   0]]
+pieceSquareRook :: V.Vector (V.Vector Int)
+pieceSquareRook = V.fromList $ reverse [ -- favor 7th rank rooks
+  V.fromList [0,   0,   0,   0,   0,   0,   0,   0],
+  V.fromList [20, 20,  20,  20,  20,  20,  20,  20],
+  V.fromList [0,   0,   0,   0,   0,   0,   0,   0],
+  V.fromList [0,   0,   0,   0,   0,   0,   0,   0],
+  V.fromList [0,   0,   0,   0,   0,   0,   0,   0],
+  V.fromList [0,   0,   0,   0,   0,   0,   0,   0],
+  V.fromList [0,   0,   0,   0,   0,   0,   0,   0],
+  V.fromList [0,   0,   0,   0,   0,   0,   0,   0]]
