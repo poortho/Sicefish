@@ -20,7 +20,7 @@ parseUCICmd :: Parser UCICommand
 parseUCICmd = parseSimpleCmd <|> parsePosition <|> parseGo <|> (None <$ string "")
 
 parsePosition :: Parser UCICommand
-parsePosition = Position . fromJust <$> (playMoves <$> (Just <$> (string "position" *> space *> (parseFEN <|> (startState <$ string "startpos")))) <*>
+parsePosition = Position . fromJust <$> (playMoves <$> (Just <$> (string "position" *> space *> ((string "fen" *> space *> parseFEN) <|> (startState <$ string "startpos")))) <*>
   (unwrapMaybeList <$> optional (space *> string "moves" *> space *> sepBy1 parseMove space)))
 
 parseMove :: Parser Move
