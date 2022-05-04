@@ -17,7 +17,7 @@ data UCICommand = UCI | UCINewGame | IsReady | Position GameState | Go TimeContr
 data TimeControlCmd = WTime Int | BTime Int | WInc Int | BInc Int
 
 parseUCICmd :: Parser UCICommand
-parseUCICmd = parseSimpleCmd <|> parsePosition <|> parseGo <|> (None <$ (string ""))
+parseUCICmd = parseSimpleCmd <|> parsePosition <|> parseGo <|> (None <$ string "")
 
 parsePosition :: Parser UCICommand
 parsePosition = Position . fromJust <$> (playMoves <$> (Just <$> (string "position" *> space *> (parseFEN <|> (startState <$ string "startpos")))) <*>

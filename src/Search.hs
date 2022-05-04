@@ -7,10 +7,11 @@ import Move
 import MoveGen
 import Data.List
 
-searchPosition :: GameState -> Move
+searchPosition :: GameState -> (Int, Move)
 searchPosition state@(GameState _ col _ _ _ _ _ _ _) = case generateMoves state of
   [] -> undefined -- why are we searching a position in check/stalemate? lmao
-  l -> getLastMove ((if col == White then maximumBy else minimumBy) (\x y -> compare (alphaBeta x (-100000000) 100000000 4) (alphaBeta y (-100000000) 100000000 4)) l)
+  l -> let bestMove = (if col == White then maximumBy else minimumBy) (\x y -> compare (fst x) (fst y)) (map (\x -> (alphaBeta x (-100000000) 100000000 4, x)) l) in
+          (fst bestMove, getLastMove . snd $ bestMove)
     -- should refactor because it calls alphabeta multiple times on each element...
 
 alphaBeta :: GameState -> Int -> Int -> Int -> Int
