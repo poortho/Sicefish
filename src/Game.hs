@@ -37,7 +37,7 @@ playMove game@(GameState brd toMove wk bk rights ep clock counter moveList) move
                                                         (updateEnPassant brd move)
                                                         (updateMoveClock clock brd pType to)
                                                         (counter + 1)
-                                                        (move:moveList)
+                                                        (move : moveList)
 
 -- insanely ugly LOL
 updateBoard :: Board -> Piece -> Move -> EnPassant -> Board
