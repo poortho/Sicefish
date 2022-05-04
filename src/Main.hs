@@ -23,7 +23,7 @@ runUCI state = do
         putStrLn "id name Sicefish"
         putStrLn "id author Elvin Liu & Claude Zou"
         putStrLn "uciok"
-      UCINewGame -> putStr "" -- do nothing?
+      UCINewGame -> runUCI startState -- do nothing?
       IsReady -> putStrLn "readyok" -- apparently this can be sent while calculating and we need to respond immediately (???)
       Position new_state -> runUCI new_state
       Go t -> let (score, bestMove) = searchPosition state in
