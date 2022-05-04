@@ -139,7 +139,7 @@ printMoves g = mapM_ putStrLn $ getMoves g
 
 getMoves :: [GameState] -> [String]
 getMoves [] = []
-getMoves ((GameState brd _ _ _ _ _ _ _ moves) : rest) = parseMove (last moves) brd : getMoves rest
+getMoves ((GameState brd _ _ _ _ _ _ _ moves) : rest) = parseMove (head moves) brd : getMoves rest
     where
         parseMove (Move from to _ Nothing) brd = getPieceType brd to ++ " " ++ show (indexToFr from) ++ " " ++ show (indexToFr to)
         parseMove (Move from to _ (Just p)) brd = getPieceType brd to ++ " " ++ show (indexToFr from) ++ " " ++ show (indexToFr to) ++ "=" ++ show p
@@ -149,4 +149,4 @@ getMoves ((GameState brd _ _ _ _ _ _ _ moves) : rest) = parseMove (last moves) b
 
 getLastMove :: GameState -> Move
 getLastMove (GameState _ _ _ _ _ _ _ _ []) = undefined -- no move L
-getLastMove (GameState _ _ _ _ _ _ _ _ l) = last l
+getLastMove (GameState _ _ _ _ _ _ _ _ l) = head l
