@@ -4,7 +4,7 @@ import Pieces
 import Board
 import Move
 import Special
-import qualified Data.Map as Map
+import qualified Data.HashMap.Strict as Map
 
 data GameState = GameState {
     board :: Board,

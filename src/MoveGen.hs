@@ -5,6 +5,7 @@ import Board
 import Game
 import Data.List as List
 import Data.Maybe as Maybe
+import qualified Data.HashMap.Strict as HMap
 import qualified Data.Map as Map
 import Data.Maybe ( isNothing )
 import Move
@@ -51,18 +52,18 @@ getPossibleRays index (Piece King _) = [MoveCapture $ map (\dir -> extend index 
 rayValidCaptures :: GameState -> Color -> Ray -> Ray
 rayValidCaptures game color = filter $ \index -> isEnPassantIndex (enPassant game) color index || attacking game color index
     where
-        attacking game color index = case Map.lookup index (board game) of
+        attacking game color index = case HMap.lookup index (board game) of
             Just (Piece _ other) -> other /= color
             Nothing -> False
 
 -- ray continues as long as squares are not occupied
 rayValidMoves :: GameState -> Ray -> Ray
-rayValidMoves game = takeWhile (isNothing . flip Map.lookup (board game))
+rayValidMoves game = takeWhile (isNothing . flip HMap.lookup (board game))
 
 -- combination of above -- basically for anything that isnt a pawn lmao
 rayValidCaptureMoves :: GameState -> Color -> Ray -> Ray
 rayValidCaptureMoves _ _ [] = []
-rayValidCaptureMoves game color (index:rest) = case Map.lookup index (board game) of
+rayValidCaptureMoves game color (index:rest) = case HMap.lookup index (board game) of
     Just (Piece _ other) -> [index | other /= color]
     Nothing              -> index : rayValidCaptureMoves game color rest
 
@@ -83,7 +84,7 @@ isSquareAttacked brd color index = let oppPieces = map (`Piece` color) allPieces
                 where
                     rayAttacksSquare' :: Board -> Piece -> Ray -> Bool
                     rayAttacksSquare' _ _ [] = False
-                    rayAttacksSquare' brd piece@(Piece pType color) (index : ray) = case Map.lookup index brd of
+                    rayAttacksSquare' brd piece@(Piece pType color) (index : ray) = case HMap.lookup index brd of
                         Just (Piece otherP otherC) -> otherC /= color && otherP == pType
                         Nothing -> rayAttacksSquare' brd piece ray
 
@@ -94,7 +95,7 @@ generateMoves :: GameState -> [GameState]
 generateMoves game = sortOn (moveType . last . moves) $ filter (not . flip isPlayerInCheck (player game)) (concatMap (genPseudoLegal game) [(r, f) | r <- [0..7], f <- [0..7]])
     where
         genPseudoLegal :: GameState -> Index -> [GameState]
-        genPseudoLegal game index = case Map.lookup index (board game) of
+        genPseudoLegal game index = case HMap.lookup index (board game) of
             Nothing -> []
             Just piece@(Piece pType color) ->
                 if color /= player game
@@ -108,10 +109,10 @@ processRays :: GameState -> Index -> Ray -> [GameState]
 processRays game src dests = Maybe.mapMaybe (playMove game) $ concatMap (movesFromIndexes (board game) src) dests
 
 movesFromIndexes :: Board -> Index -> Index -> [Move]
-movesFromIndexes brd src dest = case (Map.lookup src brd, indexToRank dest) of
+movesFromIndexes brd src dest = case (HMap.lookup src brd, indexToRank dest) of
     (Just (Piece Pawn White), Rank8) -> map (Move src dest Promotion . Just) promotions
     (Just (Piece Pawn Black), Rank1) -> map (Move src dest Promotion . Just) promotions
-    (_, _) -> case Map.lookup dest brd of
+    (_, _) -> case HMap.lookup dest brd of
         Nothing -> [Move src dest Quiet Nothing]
         (Just _) -> [Move src dest Capture Nothing]
 
@@ -130,7 +131,7 @@ genCastling game
                                                         squaresToCheckCheck = extend src dir 2 in
                 [last squaresToCheckCheck | not (any (isOccupied (board game)) squaresToCheckOccupied || any (isSquareAttacked (board game) (player game)) squaresToCheckCheck)]
                     where
-                        isOccupied brd index = case Map.lookup index brd of
+                        isOccupied brd index = case HMap.lookup index brd of
                             Nothing -> False
                             Just _ -> True
 
@@ -143,7 +144,7 @@ getMoves ((GameState brd _ _ _ _ _ _ _ moves) : rest) = parseMove (head moves) b
     where
         parseMove (Move from to _ Nothing) brd = getPieceType brd to ++ " " ++ show (indexToFr from) ++ " " ++ show (indexToFr to)
         parseMove (Move from to _ (Just p)) brd = getPieceType brd to ++ " " ++ show (indexToFr from) ++ " " ++ show (indexToFr to) ++ "=" ++ show p
-        getPieceType brd index = case Map.lookup index brd of
+        getPieceType brd index = case HMap.lookup index brd of
             Nothing -> "LOLWRONG"
             Just (Piece ptype _) -> show ptype
 

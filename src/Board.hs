@@ -1,12 +1,12 @@
 module Board where
 
 import Pieces
-import qualified Data.Map as Map
+import qualified Data.HashMap.Strict as Map
 import Data.Maybe as Maybe (catMaybes)
 import Data.List
 import Data.Char
 
-type Board = Map.Map (Int, Int) Piece
+type Board = Map.HashMap (Int, Int) Piece
 
 -- bit representation of coordinate, as in 0x88
 type Index = (Int, Int)

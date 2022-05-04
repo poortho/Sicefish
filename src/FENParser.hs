@@ -6,6 +6,7 @@ import Text.Megaparsec
 import Text.Megaparsec.Char
 import Text.Megaparsec.Error
 import qualified Text.Megaparsec.Char.Lexer as L
+import qualified Data.HashMap.Strict as HMap
 import qualified Data.Map as Map
 
 import System.IO
@@ -33,17 +34,17 @@ parseFEN = do
 piecePlacement :: Int -> Parser Board
 piecePlacement row
   | row == 0 = pieceRow row 0
-  | otherwise = Map.union <$> pieceRow row 0 <* char '/' <*> piecePlacement (row-1)
+  | otherwise = HMap.union <$> pieceRow row 0 <* char '/' <*> piecePlacement (row-1)
 
 pieceRow :: Int -> Int -> Parser Board
 pieceRow row col
-  | col > 7 = pure Map.empty -- row is fully parsed
-  | otherwise = Map.union <$> pieceTile row col <*> pieceRow row (col+1) <|> do
+  | col > 7 = pure HMap.empty -- row is fully parsed
+  | otherwise = HMap.union <$> pieceTile row col <*> pieceRow row (col+1) <|> do
       digit <- boundedDigit 1 (8-col)
       pieceRow row (col+digit)
 
 pieceTile :: Int -> Int -> Parser Board
-pieceTile i j = Map.singleton (j, i) <$> piece
+pieceTile i j = HMap.singleton (j, i) <$> piece
 
 piece :: Parser Piece
 piece = charToPiece <$> (bPiece <|> wPiece)
