@@ -3,7 +3,7 @@ module Eval where
 import Pieces
 import Game
 import Board
-import qualified Data.Map as Map
+import qualified Data.HashMap.Strict as Map
 import qualified Data.Vector as V
 
 evalPosition :: GameState -> Int

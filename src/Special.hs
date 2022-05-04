@@ -3,6 +3,7 @@ module Special where
 import Pieces
 import Board
 import Move
+import qualified Data.HashMap.Strict as HMap
 import qualified Data.Map as Map
 
 data CastleType = Short | Long
@@ -17,7 +18,7 @@ newtype EnPassant = EnPassant (Maybe Index)
     deriving (Show, Eq)
 
 updateCastleFromCapture :: CanCastle -> Board -> Move -> CanCastle
-updateCastleFromCapture rights brd move = case Map.lookup (dest move) brd of
+updateCastleFromCapture rights brd move = case HMap.lookup (dest move) brd of
     Just (Piece Rook color) -> case (indexToFr (dest move), color) of
                                 ((FileA, Rank1), White) -> Map.insert (Castle White Long) False rights
                                 ((FileH, Rank1), White) -> Map.insert (Castle White Short) False rights
@@ -27,7 +28,7 @@ updateCastleFromCapture rights brd move = case Map.lookup (dest move) brd of
     _ -> rights
 
 updateCastleFromMove :: CanCastle -> Board -> Move -> CanCastle
-updateCastleFromMove rights brd move = case Map.lookup (src move) brd of
+updateCastleFromMove rights brd move = case HMap.lookup (src move) brd of
     Just (Piece King color) -> foldr (`Map.insert` False) rights [Castle color Long, Castle color Short]
     Just (Piece Rook color) -> case indexToFile (src move) of
         FileA -> Map.insert (Castle color Long) False rights
@@ -46,7 +47,7 @@ defaultEnPassant :: EnPassant
 defaultEnPassant = EnPassant Nothing 
 
 updateEnPassant :: Board -> Move -> EnPassant
-updateEnPassant brd (Move src dest _ _) = case (Map.lookup src brd, indexToRank src, indexToRank dest) of
+updateEnPassant brd (Move src dest _ _) = case (HMap.lookup src brd, indexToRank src, indexToRank dest) of
     (Just (Piece Pawn White), Rank2, Rank4) -> EnPassant (Just (frToIndex (indexToFile src) Rank3))
     (Just (Piece Pawn Black), Rank7, Rank5) -> EnPassant (Just (frToIndex (indexToFile src) Rank6))
     _ -> EnPassant Nothing
