@@ -6,6 +6,7 @@ import Move
 import Special
 import qualified Data.HashMap.Strict as Map
 
+
 data GameState = GameState {
     board :: Board,
     player :: Color,
@@ -80,3 +81,4 @@ playMoves (Just state) (x:xs) = playMoves (playMove state x) xs
 
 startState :: GameState
 startState = GameState startBoard White (frToIndex FileE Rank1) (frToIndex FileE Rank8) defaultCastling defaultEnPassant 0 1 []
+

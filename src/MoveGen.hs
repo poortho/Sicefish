@@ -13,6 +13,10 @@ import Special
 import Data.Function.Memoize
 -- for debugging purposes
 import Control.Monad (mapM_)
+import Test.QuickCheck
+import GHC.Base (Bool)
+import Data.Bool (Bool(False))
+
 
 data PossibleRay = OnlyMove [Ray] | OnlyCapture [Ray] | MoveCapture [Ray]
 
@@ -153,6 +157,88 @@ getMoves ((GameState brd _ _ _ _ _ _ _ moves) : rest) = parseMove (head moves) b
             Just (Piece ptype _) -> show ptype
 
 getLastMove :: GameState -> Move
-getLastMove (GameState _ _ _ _ _ _ _ _ []) = undefined -- no move L
+getLastMove (GameState _ _ _ _ _ _ _ _ []) = error "no moves" -- no move L
 getLastMove (GameState _ _ _ _ _ _ _ _ l) = head l
 
+
+-- quickcheck
+
+instance Arbitrary GameState where
+    arbitrary = genRandomGameState
+
+genRandomGameState :: Gen GameState
+genRandomGameState = do
+    pawns <- choose (0, 10)
+    pieces <- choose (0, 10)
+    color <- choose (0, 1)
+    b <- genRandomBoard pawns pieces
+    let g = GameState   b
+                        (toEnum color)
+                        (getPieceLoc b (Piece King White))
+                        (getPieceLoc b (Piece King Black))
+                        (foldr (`Map.insert` False) Map.empty [Castle color side | color <- [White, Black], side <- [Short, Long]])
+                        (EnPassant Nothing)
+                        0
+                        0
+                        [] in
+        if isPlayerInCheck g (swapColor (toEnum color)) then genRandomGameState else return g
+
+
+genRandomBoard :: Int -> Int -> Gen Board
+genRandomBoard numPawns numPieces = do
+    b <- genRandomKings
+    b' <- genRandomPawns b numPawns
+    genRandomPieces b' numPieces
+
+
+genRandomKings :: Gen Board
+genRandomKings = do
+    rank1 <- choose (0, 7)
+    file1 <- choose (0, 7)
+    rank2 <- choose (0, 7)
+    file2 <- choose (0, 7)
+    if isAdjacent (file1, rank1) (file2, rank2) then genRandomKings else return $ HMap.fromList [((file1, rank1), Piece King White),
+                                                                                               ((file2, rank2), Piece King Black)]
+
+genRandomPawns :: Board -> Int -> Gen Board
+genRandomPawns b 0 = return b
+genRandomPawns b pawns = do
+    file <- choose (1, 6)
+    rank <- choose (1, 6)
+    pc <- choose (0, 1)
+    case HMap.lookup (file, rank) b of
+        Nothing -> genRandomPawns (HMap.insert (file, rank) (Piece Pawn (toEnum pc)) b) (pawns-1)
+        _       -> genRandomPawns b pawns
+
+genRandomPieces :: Board -> Int -> Gen Board
+genRandomPieces b 0 = return b
+genRandomPieces b pieces = do
+    file <- choose (0, 7)
+    rank <- choose (0, 7)
+    pc <- choose (0, 1)
+    pt <- choose (0, 4)
+    case HMap.lookup (file, rank) b of
+        Nothing -> genRandomPawns (HMap.insert (file, rank) (Piece (toEnum pt) (toEnum pc)) b) (pieces-1)
+        _       -> genRandomPawns b pieces
+
+isAdjacent :: Index -> Index -> Bool
+isAdjacent (x1, y1) (x2, y2) = abs (x1 - x2) <= 1 && abs (y1 - y2) <= 1
+
+prop_notInCheckAfterMove :: GameState -> Bool
+prop_notInCheckAfterMove g = let next = generateMoves g in
+    null next || not (any (\g -> isPlayerInCheck g (swapColor (player g))) next)
+
+prop_allMovesLegalAndCorrectBoardState :: GameState -> Bool
+prop_allMovesLegalAndCorrectBoardState g = let next = generateMoves g in
+    null next || all (isLegal g) next
+    where
+        isLegal oG nG = let m = getLastMove nG in
+            case m of
+                m@(Move _ _ Promotion (Just pt)) -> (case HMap.lookup (dest m) (board oG) of
+                    Nothing -> (HMap.lookup (src m) (board oG) == Just (Piece Pawn (player oG))) && (HMap.lookup (dest m) (board nG) == Just (Piece pt (player oG)))
+                    Just (Piece King _) -> False
+                    Just (Piece _ c) -> (c == player nG) && (HMap.lookup (src m) (board oG) == Just (Piece Pawn (player oG))) && (HMap.lookup (dest m) (board nG) == Just (Piece pt (player oG))))
+                _  -> (case HMap.lookup (dest m) (board oG) of
+                    Nothing -> HMap.lookup (src m) (board oG) == HMap.lookup (dest m) (board nG)
+                    Just (Piece King _) -> False
+                    Just (Piece _ c) -> (c == player nG) && (HMap.lookup (src m) (board oG) == HMap.lookup (dest m) (board nG)))
