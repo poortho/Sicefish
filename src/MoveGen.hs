@@ -151,3 +151,4 @@ getMoves ((GameState brd _ _ _ _ _ _ _ moves) : rest) = parseMove (head moves) b
 getLastMove :: GameState -> Move
 getLastMove (GameState _ _ _ _ _ _ _ _ []) = undefined -- no move L
 getLastMove (GameState _ _ _ _ _ _ _ _ l) = head l
+
