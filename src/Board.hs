@@ -3,12 +3,11 @@ module Board where
 import Pieces
 import qualified Data.HashMap.Strict as Map
 import Data.Maybe as Maybe (catMaybes)
-import Data.List
-import Data.Char
+import Data.Char ( ord, chr )
 
 type Board = Map.HashMap (Int, Int) Piece
 
--- bit representation of coordinate, as in 0x88
+-- bit representation of coordinate
 type Index = (Int, Int)
 
 type Ray = [Index]

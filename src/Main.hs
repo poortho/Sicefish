@@ -12,6 +12,7 @@ import Pieces
 main :: IO ()
 main = do
   hSetBuffering stdout NoBuffering
+  putStrLn "Sicefish by Elvin Liu & Claude Zou"
   runUCI startState
 
 runUCI :: GameState -> IO ()

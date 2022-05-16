@@ -41,12 +41,14 @@ playMove game@(GameState brd toMove wk bk rights ep clock counter moveList) move
 
 updateBoard :: Board -> Piece -> Move -> EnPassant -> Board
 updateBoard brd king@(Piece King color) (Move from to _ _) _ = case (indexToFile from, indexToFile to) of
+    -- castling kingside
     (FileE, FileG) -> let brd' = Map.insert to king brd
                           brd'' = Map.delete from brd'
                           rookIndex = frToIndex FileH (indexToRank from)
                           rookToIndex = frToIndex FileF (indexToRank from)
                           brd''' = Map.insert rookToIndex (Piece Rook color) brd'' in
                         Map.delete rookIndex brd'''
+    -- castling queenside
     (FileE, FileC) -> let brd' = Map.insert to king brd
                           brd'' = Map.delete from brd'
                           rookIndex = frToIndex FileA (indexToRank from)
@@ -55,8 +57,10 @@ updateBoard brd king@(Piece King color) (Move from to _ _) _ = case (indexToFile
                         Map.delete rookIndex brd'''
     _ -> let brd' = Map.insert to king brd in
                 Map.delete from brd'
+-- promotion
 updateBoard brd pawn@(Piece Pawn color) (Move from to _ (Just piece)) _ = let brd' = Map.delete from brd in
                                                         Map.insert to (Piece piece color) brd'
+-- en passant
 updateBoard brd pawn@(Piece Pawn color) (Move from to _ _) ep = case getPawnIndexEP ep color to of
     Nothing -> let brd' = Map.insert to pawn brd in
                 Map.delete from brd'

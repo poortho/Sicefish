@@ -4,7 +4,7 @@ import Pieces
 import Board
 import Game
 import Data.List as List ( sortOn )
-import Data.Maybe as Maybe
+import Data.Maybe as Maybe ( mapMaybe, isNothing )
 import qualified Data.HashMap.Strict as HMap
 import qualified Data.Map as Map
 import Data.Maybe ( isNothing )
@@ -48,6 +48,16 @@ getPossibleRays index (Piece Rook _) = [MoveCapture $ map (\dir -> extend index 
 getPossibleRays index (Piece Queen _) = [MoveCapture $ map (\dir -> extend index dir 8) (cardinals ++ diagonals)]
 getPossibleRays index (Piece King _) = [MoveCapture $ map (\dir -> extend index dir 1) (cardinals ++ diagonals)]
 
+genValidRays :: GameState -> Color -> [PossibleRay] -> Ray
+genValidRays game color = concatMap (\case
+    OnlyMove rays -> concatMap (rayValidMoves game) rays
+    OnlyCapture rays -> concatMap (rayValidCaptures game color) rays
+    MoveCapture rays -> concatMap (rayValidCaptureMoves game color) rays)
+
+-- ray continues as long as squares are not occupied
+rayValidMoves :: GameState -> Ray -> Ray
+rayValidMoves game = takeWhile (isNothing . flip HMap.lookup (board game))
+
 -- captures are valid if piece on target is opposite color
 rayValidCaptures :: GameState -> Color -> Ray -> Ray
 rayValidCaptures game color = filter $ \index -> isEnPassantIndex (enPassant game) color index || attacking game color index
@@ -56,22 +66,12 @@ rayValidCaptures game color = filter $ \index -> isEnPassantIndex (enPassant gam
             Just (Piece _ other) -> other /= color
             Nothing -> False
 
--- ray continues as long as squares are not occupied
-rayValidMoves :: GameState -> Ray -> Ray
-rayValidMoves game = takeWhile (isNothing . flip HMap.lookup (board game))
-
 -- combination of above -- basically for anything that isnt a pawn lmao
 rayValidCaptureMoves :: GameState -> Color -> Ray -> Ray
 rayValidCaptureMoves _ _ [] = []
 rayValidCaptureMoves game color (index:rest) = case HMap.lookup index (board game) of
     Just (Piece _ other) -> [index | other /= color]
     Nothing              -> index : rayValidCaptureMoves game color rest
-
-genValidRays :: GameState -> Color -> [PossibleRay] -> Ray
-genValidRays game color = concatMap (\case
-    OnlyMove rays -> concatMap (rayValidMoves game) rays
-    OnlyCapture rays -> concatMap (rayValidCaptures game color) rays
-    MoveCapture rays -> concatMap (rayValidCaptureMoves game color) rays)
 
 -- very yucky
 -- checks attacks by generating pieces of the SAME color
@@ -93,8 +93,11 @@ isSquareAttacked brd color index = let oppPieces = map (`Piece` color) allPieces
 isPlayerInCheck :: GameState -> Color -> Bool
 isPlayerInCheck game color = isSquareAttacked (board game) color (if color == White then whiteKing game else blackKing game)
 
+-- generated moves are ordered so that captures are first in the list
+-- possibly generates more cutoffs in alpha-beta
 generateMoves :: GameState -> [GameState]
-generateMoves game = sortOn (moveType . head . moves) $ filter (not . flip isPlayerInCheck (player game)) (concatMap (genPseudoLegal game) (HMap.keys (board game)))
+generateMoves game = sortOn (moveType . head . moves) $ 
+                        filter (not . flip isPlayerInCheck (player game)) (concatMap (genPseudoLegal game) (HMap.keys (board game)))
 
 genPseudoLegal :: GameState -> Index -> [GameState]
 genPseudoLegal game index = case HMap.lookup index (board game) of
@@ -131,7 +134,7 @@ genCastling game
                                                         src = if color == White then whiteKing game else blackKing game
                                                         squaresToCheckOccupied = extend src dir len
                                                         squaresToCheckCheck = extend src dir 2 in
-                [last squaresToCheckCheck | not (any (isOccupied (board game)) squaresToCheckOccupied || 
+                [last squaresToCheckCheck | not (any (isOccupied (board game)) squaresToCheckOccupied ||
                                                  any (isSquareAttacked (board game) (player game)) squaresToCheckCheck)]
                     where
                         isOccupied brd index = case HMap.lookup index brd of
@@ -217,11 +220,43 @@ prop_allMovesLegalAndCorrectBoardState g = let next = generateMoves g in
         isLegal oG nG = let m = getLastMove nG in
             case m of
                 m@(Move _ _ Promotion (Just pt)) -> (case HMap.lookup (dest m) (board oG) of
-                    Nothing -> (HMap.lookup (src m) (board oG) == Just (Piece Pawn (player oG))) && (HMap.lookup (dest m) (board nG) == Just (Piece pt (player oG)))
+                    Nothing -> (HMap.lookup (src m) (board oG) == Just (Piece Pawn (player oG))) && 
+                                (HMap.lookup (dest m) (board nG) == Just (Piece pt (player oG)))
                     Just (Piece King _) -> False
-                    Just (Piece _ c) -> (c == player nG) && (HMap.lookup (src m) (board oG) == Just (Piece Pawn (player oG))) && 
+                    Just (Piece _ c) -> (c == player nG) && (HMap.lookup (src m) (board oG) == Just (Piece Pawn (player oG))) &&
                                             (HMap.lookup (dest m) (board nG) == Just (Piece pt (player oG))))
                 _  -> (case HMap.lookup (dest m) (board oG) of
                     Nothing -> HMap.lookup (src m) (board oG) == HMap.lookup (dest m) (board nG)
                     Just (Piece King _) -> False
                     Just (Piece _ c) -> (c == player nG) && (HMap.lookup (src m) (board oG) == HMap.lookup (dest m) (board nG)))
+
+prop_allMovesCorrectDirection :: GameState -> Bool
+prop_allMovesCorrectDirection g = let next = generateMoves g in
+    null next || all (isMovementCorrect g) next
+    where
+        isMovementCorrect oG nG = let m = getLastMove nG in
+            case m of
+                m@(Move (srcFile, srcRank) (destFile, destRank) Promotion (Just pt)) -> (case HMap.lookup (dest m) (board oG) of
+                    Nothing -> abs (destRank - srcRank) == 1
+                    Just (Piece _ _) -> (abs (destRank - srcRank) == 1) && (abs (destFile - srcFile) == 1))
+                m@(Move (srcFile, srcRank) (destFile, destRank) _ _) -> (case HMap.lookup (src m) (board oG) of
+                    Just (Piece Pawn c) -> if isNothing (HMap.lookup (dest m) (board oG))
+                                then (case (srcRank, c) of
+                                        (1, White) -> (destRank - srcRank) == 1 || (destRank - srcRank) == 2
+                                        (6, Black) -> (srcRank - destRank) == 1 || (srcRank - destRank) == 2
+                                        (_, _) -> abs (destRank - srcRank) == 1)
+                                else (abs (destRank - srcRank) == 1) && (abs (destFile - srcFile) == 1)
+                    Just (Piece Bishop _) -> abs (destFile - srcFile) == abs (destRank - srcRank)
+                    Just (Piece Knight _) -> (abs (destFile - srcFile) == 2 && abs (destRank - srcRank) == 1) || 
+                                             (abs (destFile - srcFile) == 1 && abs (destRank - srcRank) == 2)
+                    Just (Piece Rook _) -> (abs (destFile - srcFile) == 0 && abs (destRank - srcRank) > 0) ||
+                                           (abs (destFile - srcFile) > 0 && abs (destRank - srcRank) == 0)
+                    Just (Piece Queen _) -> (abs (destFile - srcFile) == abs (destRank - srcRank)) ||
+                                            (abs (destFile - srcFile) == 0 && abs (destRank - srcRank) > 0) ||
+                                            (abs (destFile - srcFile) > 0 && abs (destRank - srcRank) == 0)
+                    Just (Piece King _) -> abs (destFile - srcFile) <= 1 && abs (destRank - srcRank) <= 1 &&
+                                           not (abs (destFile - srcFile) == 0 && abs (destRank - srcRank) == 0)
+                    Nothing -> False)
+
+
+
