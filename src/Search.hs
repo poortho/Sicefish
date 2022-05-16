@@ -22,14 +22,14 @@ alphaBeta state@(GameState _ White _ _ _ _ _ _ _) a b depth = helperF (f $ gener
         helperF [x] a b depth val = max val (alphaBeta x a b (depth-1))
         helperF (x:xs) a b depth val = if newval >= b then newval else helperF xs (max a newval) b depth newval
           where newval = max val (alphaBeta x a b (depth-1))
-        f l = map (\x -> snd x) $ sortBy (\x y -> compare (fst y) (fst x)) (map (\x -> (evalPosition x, x)) l)
+        f l = map snd $ sortBy (\x y -> compare (fst y) (fst x)) (map (\x -> (evalPosition x, x)) l)
 alphaBeta state@(GameState _ Black _ _ _ _ _ _ _) a b depth = helperF (f $ generateMoves state) a b depth 10000000
   where
         helperF [] _ _ _ _ = if isPlayerInCheck state Black then 9999999+depth else 0
         helperF [x] a b depth val = min val (alphaBeta x a b (depth-1))
         helperF (x:xs) a b depth val = if newval <= a then newval else helperF xs a (min b newval) depth newval
           where newval = min val (alphaBeta x a b (depth-1))
-        f l = map (\x -> snd x) $ sortBy (\x y -> compare (fst x) (fst y)) (map (\x -> (evalPosition x, x)) l)
+        f l = map snd $ sortBy (\x y -> compare (fst x) (fst y)) (map (\x -> (evalPosition x, x)) l)
 
 minimax :: GameState -> Int -> Int
 minimax state 0 = evalPosition state

@@ -33,7 +33,7 @@ pieceSquareCalc (i, j) (Piece pt col) = case pt of
   Bishop -> g $ pieceSquareBishop V.! f j V.! i
   Rook -> g $ pieceSquareBishop V.! f j V.! i
   _ -> 0
-  where f = if col == White then id else \x -> 7-x
+  where f = if col == White then id else (7 -)
         g = if col == White then id else negate
 
 pieceSquarePawn :: V.Vector (V.Vector Int)
