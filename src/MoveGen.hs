@@ -93,7 +93,7 @@ isSquareAttacked brd color index = let oppPieces = map (`Piece` color) allPieces
 isPlayerInCheck :: GameState -> Color -> Bool
 isPlayerInCheck game color = isSquareAttacked (board game) color (if color == White then whiteKing game else blackKing game)
 
--- generated moves are ordered so that captures are first in the list
+-- generated successor states are ordered so that captures are first in the list
 -- possibly generates more cutoffs in alpha-beta
 generateMoves :: GameState -> [GameState]
 generateMoves game = sortOn (moveType . head . moves) $ 
