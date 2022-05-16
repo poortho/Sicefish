@@ -41,7 +41,6 @@ maybeToPromo (Just c) = case c of
 promoChar :: Parser (Maybe Char)
 promoChar = optional (char 'b' <|> char 'n' <|> char 'r' <|> char 'q')
 
--- is there a better way to do this lmao
 unwrapMaybeList :: Maybe [a] -> [a]
 unwrapMaybeList Nothing = []
 unwrapMaybeList (Just l) = l

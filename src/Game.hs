@@ -14,7 +14,7 @@ data GameState = GameState {
     canCastle :: CanCastle,
     enPassant :: EnPassant,
     moveClock :: Int, -- for 50 move rule
-    moveCounter :: Int, -- not sure if necessary, but it's in FEN
+    moveCounter :: Int,
     moves :: [Move]
 } deriving (Eq, Show)
 
@@ -25,7 +25,6 @@ data TimeControl = TimeControl {
     binc :: Int
 } deriving (Eq, Show)
 
--- TODO :smile:
 playMove :: GameState -> Move -> Maybe GameState
 playMove game@(GameState brd toMove wk bk rights ep clock counter moveList) move@(Move from to _ _) = case Map.lookup from brd of
     Nothing -> Nothing -- shouldn't happen ever
@@ -39,7 +38,6 @@ playMove game@(GameState brd toMove wk bk rights ep clock counter moveList) move
                                                         (counter + 1)
                                                         (move : moveList)
 
--- insanely ugly LOL
 updateBoard :: Board -> Piece -> Move -> EnPassant -> Board
 updateBoard brd king@(Piece King color) (Move from to _ _) _ = case (indexToFile from, indexToFile to) of
     (FileE, FileG) -> let brd' = Map.insert to king brd

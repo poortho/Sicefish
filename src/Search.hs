@@ -9,10 +9,9 @@ import Data.List
 
 searchPosition :: GameState -> (Int, Move)
 searchPosition state@(GameState _ col _ _ _ _ _ _ _) = case generateMoves state of
-  [] -> undefined -- why are we searching a position in check/stalemate? lmao
-  l -> let bestMove = (if col == White then maximumBy else minimumBy) (\x y -> compare (fst x) (fst y)) (map (\x -> (alphaBeta x (-100000000) 100000000 5, x)) l) in
+  [] -> undefined -- position is in checkmate/stalemate
+  l -> let bestMove = (if col == White then maximumBy else minimumBy) (\x y -> compare (fst x) (fst y)) (map (\x -> (alphaBeta x (-100000000) 100000000 3, x)) l) in
           (fst bestMove, getLastMove . snd $ bestMove)
-    -- should refactor because it calls alphabeta multiple times on each element...
 
 alphaBeta :: GameState -> Int -> Int -> Int -> Int
 alphaBeta state _ _ (-1) = evalPosition state

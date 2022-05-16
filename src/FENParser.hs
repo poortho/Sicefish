@@ -90,9 +90,6 @@ rank = (toEnum <$> (\x -> x-1)) . digitToInt <$> satisfy isRank
 eprank :: Parser Rank
 eprank = (toEnum <$> (\x -> x-1)) . digitToInt <$> (char '3' <|> char '6')
 
-{- isNonzeroDigit :: Char -> Bool
-isNonzeroDigit c = ord c <= ord '9' && ord c >= ord '1' -}
-
 boundedDigit :: Int -> Int -> Parser Int
 boundedDigit lower upper = digitToInt <$> satisfy (\c -> isBoundedChar c (intToDigit lower) (intToDigit upper))
 

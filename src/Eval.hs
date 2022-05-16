@@ -18,7 +18,7 @@ pieceToMaterial :: PieceType -> Int
 pieceToMaterial pt = case pt of
   Pawn -> 100
   Knight -> 300
-  Bishop -> 310 -- maybe increase this to like 3.1 lol
+  Bishop -> 310
   Rook -> 500
   Queen -> 900
   King -> 0 -- only 1 king and both sides always have it
@@ -37,7 +37,7 @@ pieceSquareCalc (i, j) (Piece pt col) = case pt of
         g = if col == White then id else negate
 
 pieceSquarePawn :: V.Vector (V.Vector Int)
-pieceSquarePawn = V.fromList $ reverse [ -- reverse it coz (0,0) is a1 in our code
+pieceSquarePawn = V.fromList $ reverse [ -- reverse it since (0,0) is a1 in our code
   V.fromList [0,   0,   0,   0,   0,   0,   0,   0],
   V.fromList [5,  10,  15,  20,  20,  15,  10,   5],
   V.fromList [4,   8,  12,  16,  16,  12,   8,   4],

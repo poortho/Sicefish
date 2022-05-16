@@ -39,4 +39,4 @@ pieceToChar pt = case pt of
     Knight -> 'n'
     Rook -> 'r'
     Queen -> 'q'
-    _ -> undefined -- only called for promo rn
+    _ -> undefined -- only called for promotion
