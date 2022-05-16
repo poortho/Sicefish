@@ -7,7 +7,7 @@ import Data.Char ( ord, chr )
 
 type Board = Map.HashMap (Int, Int) Piece
 
--- bit representation of coordinate
+-- index is file, rank
 type Index = (Int, Int)
 
 type Ray = [Index]
