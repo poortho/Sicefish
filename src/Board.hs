@@ -5,7 +5,6 @@ import qualified Data.HashMap.Strict as Map
 import Data.Maybe as Maybe (catMaybes)
 import Data.List
 import Data.Char
-import Data.Function.Memoize
 
 type Board = Map.HashMap (Int, Int) Piece
 
@@ -79,7 +78,6 @@ move (xInd, yInd) (xDir, yDir) = let dest = (xInd + xDir, yInd + yDir) in
 
 -- generate a ray of some length in a given direction
 --extend :: Index -> Direction -> Int -> Ray
---extend = memoize3 extend2
 
 extend :: Index -> Direction -> Int -> Ray
 extend index dir len = catMaybes $ extend' (Just index) dir len

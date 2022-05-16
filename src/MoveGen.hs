@@ -3,19 +3,14 @@ module MoveGen where
 import Pieces
 import Board
 import Game
-import Data.List as List
+import Data.List as List ( sortOn )
 import Data.Maybe as Maybe
 import qualified Data.HashMap.Strict as HMap
 import qualified Data.Map as Map
 import Data.Maybe ( isNothing )
 import Move
 import Special
-import Data.Function.Memoize
--- for debugging purposes
-import Control.Monad (mapM_)
 import Test.QuickCheck
-import GHC.Base (Bool)
-import Data.Bool (Bool(False))
 
 
 data PossibleRay = OnlyMove [Ray] | OnlyCapture [Ray] | MoveCapture [Ray]
@@ -79,6 +74,8 @@ genValidRays game color = concatMap (\case
     MoveCapture rays -> concatMap (rayValidCaptureMoves game color) rays)
 
 -- very yucky
+-- checks attacks by generating pieces of the SAME color
+-- this is so that pawn attacks generate in the correct direction
 isSquareAttacked :: Board -> Color -> Index -> Bool
 isSquareAttacked brd color index = let oppPieces = map (`Piece` color) allPieces in
     any (\p -> any (rayAttacksSquare brd p) (getPossibleRays index p)) oppPieces
@@ -97,18 +94,18 @@ isPlayerInCheck :: GameState -> Color -> Bool
 isPlayerInCheck game color = isSquareAttacked (board game) color (if color == White then whiteKing game else blackKing game)
 
 generateMoves :: GameState -> [GameState]
-generateMoves game = sortOn (moveType . head . moves) $ filter (not . flip isPlayerInCheck (player game)) (concatMap (genPseudoLegal game) [(r, f) | r <- [0..7], f <- [0..7]])
-    where
-        genPseudoLegal :: GameState -> Index -> [GameState]
-        genPseudoLegal game index = case HMap.lookup index (board game) of
-            Nothing -> []
-            Just piece@(Piece pType color) ->
-                if color /= player game
-                    then []
-                    else case pType of
-                        King -> processRays game index $ filter (not . isSquareAttacked (board game) (player game))
-                                              (genValidRays game (player game) (getPossibleRays index piece) ++ genCastling game)
-                        _    -> processRays game index $ genValidRays game (player game) (getPossibleRays index piece)
+generateMoves game = sortOn (moveType . head . moves) $ filter (not . flip isPlayerInCheck (player game)) (concatMap (genPseudoLegal game) (HMap.keys (board game)))
+
+genPseudoLegal :: GameState -> Index -> [GameState]
+genPseudoLegal game index = case HMap.lookup index (board game) of
+    Nothing -> []
+    Just piece@(Piece pType color) ->
+        if color /= player game
+            then []
+            else case pType of
+                King -> processRays game index $ filter (not . isSquareAttacked (board game) (player game))
+                                                         (genValidRays game (player game) (getPossibleRays index piece) ++ genCastling game)
+                _    -> processRays game index $ genValidRays game (player game) (getPossibleRays index piece)
 
 processRays :: GameState -> Index -> Ray -> [GameState]
 processRays game src dests = Maybe.mapMaybe (playMove game) $ concatMap (movesFromIndexes (board game) src) dests
@@ -134,24 +131,12 @@ genCastling game
                                                         src = if color == White then whiteKing game else blackKing game
                                                         squaresToCheckOccupied = extend src dir len
                                                         squaresToCheckCheck = extend src dir 2 in
-                [last squaresToCheckCheck | not (any (isOccupied (board game)) squaresToCheckOccupied || any (isSquareAttacked (board game) (player game)) squaresToCheckCheck)]
+                [last squaresToCheckCheck | not (any (isOccupied (board game)) squaresToCheckOccupied || 
+                                                 any (isSquareAttacked (board game) (player game)) squaresToCheckCheck)]
                     where
                         isOccupied brd index = case HMap.lookup index brd of
                             Nothing -> False
                             Just _ -> True
-
-printMoves :: [GameState] -> IO ()
-printMoves g = mapM_ putStrLn $ getMoves g
-
-getMoves :: [GameState] -> [String]
-getMoves [] = []
-getMoves ((GameState brd _ _ _ _ _ _ _ moves) : rest) = parseMove (head moves) brd : getMoves rest
-    where
-        parseMove (Move from to _ Nothing) brd = getPieceType brd to ++ " " ++ show (indexToFr from) ++ " " ++ show (indexToFr to)
-        parseMove (Move from to _ (Just p)) brd = getPieceType brd to ++ " " ++ show (indexToFr from) ++ " " ++ show (indexToFr to) ++ "=" ++ show p
-        getPieceType brd index = case HMap.lookup index brd of
-            Nothing -> "LOLWRONG"
-            Just (Piece ptype _) -> show ptype
 
 getLastMove :: GameState -> Move
 getLastMove (GameState _ _ _ _ _ _ _ _ []) = error "no moves" -- no move L
@@ -234,7 +219,8 @@ prop_allMovesLegalAndCorrectBoardState g = let next = generateMoves g in
                 m@(Move _ _ Promotion (Just pt)) -> (case HMap.lookup (dest m) (board oG) of
                     Nothing -> (HMap.lookup (src m) (board oG) == Just (Piece Pawn (player oG))) && (HMap.lookup (dest m) (board nG) == Just (Piece pt (player oG)))
                     Just (Piece King _) -> False
-                    Just (Piece _ c) -> (c == player nG) && (HMap.lookup (src m) (board oG) == Just (Piece Pawn (player oG))) && (HMap.lookup (dest m) (board nG) == Just (Piece pt (player oG))))
+                    Just (Piece _ c) -> (c == player nG) && (HMap.lookup (src m) (board oG) == Just (Piece Pawn (player oG))) && 
+                                            (HMap.lookup (dest m) (board nG) == Just (Piece pt (player oG))))
                 _  -> (case HMap.lookup (dest m) (board oG) of
                     Nothing -> HMap.lookup (src m) (board oG) == HMap.lookup (dest m) (board nG)
                     Just (Piece King _) -> False

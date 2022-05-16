@@ -1,7 +1,5 @@
 module Pieces where
 
-import Data.Function.Memoize
-
 data PieceType = Pawn | Bishop | Knight | Rook | Queen | King
     deriving (Ord, Eq, Show, Enum, Bounded)
 
@@ -11,8 +9,6 @@ data Color = White | Black
 data Piece = Piece PieceType Color
     deriving (Eq, Show, Bounded)
 
-instance Memoizable Piece where
-    memoize = memoizeFinite
 
 instance Enum Piece where
     toEnum i
